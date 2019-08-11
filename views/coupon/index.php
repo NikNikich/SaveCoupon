@@ -8,14 +8,15 @@ use yii\grid\GridView;
 /* @var $dataProvider yii\data\ActiveDataProvider */
 
 $this->title = 'Coupons';
-$this->params['breadcrumbs'][] = $this->title;
+//$this->params['breadcrumbs'][] = $this->title;
 ?>
 <div class="coupon-index">
 
     <h1><?= Html::encode($this->title) ?></h1>
 
     <p>
-        <?= Html::a('Create Coupon', ['create'], ['class' => 'btn btn-success']) ?>
+        <?= Html::a('Перейти к мгазинам', ['/store/index'], ['class' => 'btn btn-success']) ?>
+        <?= Html::a('Запустить сканирование  купонов', ['/coupon/process'], ['class' => 'btn btn-success']) ?>
     </p>
 
     <?php // echo $this->render('_search', ['model' => $searchModel]); ?>
@@ -28,12 +29,12 @@ $this->params['breadcrumbs'][] = $this->title;
 
             'id',
             'id_store',
-            'name',
+            'title',
             'text',
             'logo',
             //'period',
 
-            ['class' => 'yii\grid\ActionColumn'],
+          //  ['class' => 'yii\grid\ActionColumn'],
         ],
     ]); ?>
 

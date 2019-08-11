@@ -18,7 +18,7 @@ class CouponSearch extends Coupon
     {
         return [
             [['id', 'id_store'], 'integer'],
-            [['name', 'text', 'logo', 'period'], 'safe'],
+            [['title', 'text', 'logo', 'period'], 'safe'],
         ];
     }
 
@@ -62,7 +62,7 @@ class CouponSearch extends Coupon
             'id_store' => $this->id_store,
         ]);
 
-        $query->andFilterWhere(['like', 'name', $this->name])
+        $query->andFilterWhere(['like', 'title', $this->title])
             ->andFilterWhere(['like', 'text', $this->text])
             ->andFilterWhere(['like', 'logo', $this->logo])
             ->andFilterWhere(['like', 'period', $this->period]);

@@ -18,7 +18,7 @@ class StoreSearch extends Store
     {
         return [
             [['id', 'id_process_store', 'id_process_coupon', 'status'], 'integer'],
-            [['name', 'logo'], 'safe'],
+            [['name', 'href'], 'safe'],
         ];
     }
 
@@ -65,7 +65,7 @@ class StoreSearch extends Store
         ]);
 
         $query->andFilterWhere(['like', 'name', $this->name])
-            ->andFilterWhere(['like', 'logo', $this->logo]);
+            ->andFilterWhere(['like', 'href', $this->href]);
 
         return $dataProvider;
     }

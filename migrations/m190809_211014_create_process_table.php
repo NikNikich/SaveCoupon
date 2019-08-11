@@ -3,7 +3,9 @@
 use yii\db\Migration;
 
 /**
- * Handles the creation of table `{{%process}}`.
+ * Таблица для фиксации запусков парсинга
+ * 'date_start' => дата начала процесса парсинга
+ * 'date_end' => дата окончания процесса парсинга
  */
 class m190809_211014_create_process_table extends Migration
 {

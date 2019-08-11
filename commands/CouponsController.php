@@ -1,13 +1,11 @@
 <?php
 /**
- * Парсер магазинов и купонов
- * Оставил закоментировано то что считаю можно раскоментировать при запуске из консоли для информативности
+ * Парсинг чисто по купонам без магазинов
  * Created by PhpStorm.
  * User: Benjamin_King_I
- * Date: 10.08.2019
- * Time: 17:48
+ * Date: 12.08.2019
+ * Time: 0:22
  */
-
 
 namespace app\commands;
 
@@ -20,77 +18,35 @@ use GuzzleHttp\Client; // подключаем Guzzle
 use GuzzleHttp\Exception\RequestException;
 use Psr\Http\Message\ResponseInterface;
 
-
-class ParseController extends Controller
+class CouponsController extends Controller
 {
     const URL_SITE_STORES = 'https://www.coupons.com/store-loyalty-card-coupons/';//адрес со списком магазиов
     const URL_SITE = 'https://www.coupons.com';//префикс адреса для страниц с купонами
     const DIFF_DATE = 3;//период в часах, после которого предидущий незаконченный процесс считается устаревшим
-    private $store_req;//внешняя переменная для хранения данных парсинга магазинов
     private $coupon_req;//внешняя переменная для хранения данных парсинга купонов
 
     /**
      * Основная функция для начала парсинга
      */
 
-    public function actionParseSite()
+    public function actionParseCoupon()
     {
-        //   $this->stdout("Запускаем работу  \n", Console::BG_GREEN);
+       // $this->stdout("Запускаем работу  \n", Console::BG_GREEN);
         $step=0;
-        $stores_main=false;
-        while((!$stores_main)&&($step<3)){
-            $stores_main=$this->getStores();
-            $step++;
-        }
-        if($stores_main){
+        $stores_main=Store::find()
+            ->asArray()
+            ->all();
+        if(!empty($stores_main)){
             $process_options=self::GetProcessId($stores_main);
-            $stores_new=self::SaveStores($stores_main,$process_options);
-            self::SaveCoupons($stores_new,$process_options);
+            self::SaveCoupons($stores_main,$process_options);
             $day_now =  new \DateTime('now');
             $process_save= Process::findOne(['id' =>$process_options['id']]);
             $process_save->date_end=$day_now->format("Y-m-d H:i:s");
             $process_save->save();
         }
     }
-    /**
-     * Поиск по магазинам
-     */
-    private function getStores(){
-        //  $this->stdout("Ишем магазины  \n", Console::BG_GREEN);
-        $client = new Client();
-        $res = $client->requestAsync('GET', self::URL_SITE_STORES);
-        $res->then(
-            function (ResponseInterface $res) {
-                $body = $res->getBody();
-                $document = \phpQuery::newDocumentHTML($body);
-                $a_a_e = $document->find('a[class=\'store-pod\']');
-                $this->store_req=$a_a_e;
-            },
-            function (RequestException $e) {
-                //     $this->stdout("Не подключился к странице магазинов " . $e->getMessage() . "\n", Console::BG_RED);
-                $this->store_req=false;
-            }
-        );
-        $res->wait();
-        $store_pod=$this->store_req;
-        if($store_pod){
-            $stores=[];
-            foreach ($store_pod as $store_pod_one) {
-                $stores_one=[];
-                $pg_store_pod = pq($store_pod_one); //pq делает объект phpQuery
-                $stores_one['logo']='http:'.$pg_store_pod->find('img')->attr('src');
-                $stores_one['href'] = self::URL_SITE.$pg_store_pod->attr('href');
-                $div = $pg_store_pod->find('.store-browse');
-                $stores_one['name']=$div->find('div:first')->html();
-                $stores[]=$stores_one;
-            }
-            return $stores;
-        } else{
-            return false;
-        }
-    }
     private function getCoupon($url){
-        //  $this->stdout("поиск по купонам ".$url."  \n", Console::BG_GREEN);
+       // $this->stdout("поиск по купонам ".$url."  \n", Console::BG_GREEN);
         $client = new Client();
         $res = $client->requestAsync('GET', $url);
         $res->then(
@@ -101,7 +57,7 @@ class ParseController extends Controller
                 $this->coupon_req=$a_a_e;
             },
             function (RequestException $e) {
-                // $this->stdout("не смог подключиться к странице купонов".$url . $e->getMessage() . "\n", Console::BG_RED);
+                //$this->stdout("не смог подключиться к странице купонов".$url . $e->getMessage() . "\n", Console::BG_RED);
                 $this->coupon_req=false;
             }
         );
@@ -144,16 +100,10 @@ class ParseController extends Controller
             if($hours>=self::DIFF_DATE){
                 return $this->ProcessNew();
             }
-            $stores_bd=Store::find()
-                ->asArray()
-                ->all();
             $fl_new=true;
             foreach ($stores as $store) {
-                $key=array_search($store['name'], array_column( $stores_bd, 'name'));
-                if($key){
-                    if (($stores_bd[$key]['id_process_coupon']!=$processes['id'])){
-                        $fl_new=false;
-                    }
+                if (($store['id_process_coupon']!=$processes['id'])){
+                    $fl_new=false;
                 }
             }
             if($fl_new){
@@ -178,43 +128,13 @@ class ParseController extends Controller
         return $proc;
     }
     /**
-     * Сохраняем спарсенные магазины в БД
-     */
-    private function SaveStores($stores,$proc_option){
-        foreach ($stores as $key_store=>$store) {
-            $stores_bd=Store::find()
-                ->where(['name'=>$store['name']])
-                ->asArray()
-                ->one();
-            if (empty($stores_bd)){
-                $store_new= new Store();
-                $store_new->name=$store['name'];
-                $store_new->href=$store['href'];
-                $store_new->id_process_store=$proc_option['id'];
-                $store_new->save();
-                $stores[$key_store]['id_store']=$store_new->id;
-            } else{
-                if($proc_option['is_new']){
-                    $stores[$key_store]['id_store']=$stores_bd['id'];
-                } else{
-                    if($stores_bd['id_process_coupon']!=$proc_option['id']){
-                        $stores[$key_store]['id_store']=$stores_bd['id'];
-                    } else{
-                        unset($stores[$key_store]);
-                    }
-                }
-            }
-        }
-        return $stores;
-    }
-    /**
      * Сохраняем найденные купоны и удаляем неактуальные
      */
     private function SaveCoupons($stores,$proc_option){
-        //  $this->stdout("сохраняем купоны" . "\n", Console::BG_GREEN);
+        //$this->stdout("сохраняем купоны" . "\n", Console::BG_GREEN);
         foreach ($stores as $store) {
-            //     $this->stdout("купоны магазина ".$store['id_store'] . "\n", Console::BG_GREEN);
-            if((int)$store['id_store']>0) {
+           // $this->stdout("купоны магазина ".$store['id'] . "\n", Console::BG_GREEN);
+            if((int)$store['id']>0) {
                 $step = 0;
                 $coupons_main = false;
                 while ((!$coupons_main) && ($step < 3)) {
@@ -227,7 +147,7 @@ class ParseController extends Controller
                         $coupons_bd = Coupon::find()
                             ->where(['title' => $coupon['title']])
                             ->andWhere(['text'=>$coupon['text']])
-                            ->andWhere(['id_store' => $store['id_store']])
+                            ->andWhere(['id_store' => $store['id']])
                             ->asArray()
                             ->one();
                         if (empty($coupons_bd)){
@@ -235,7 +155,7 @@ class ParseController extends Controller
                             $coupon_new->title=$coupon['title'];
                             $coupon_new->text=$coupon['text'];
                             $coupon_new->period=$coupon['period'];
-                            $coupon_new->id_store=$store['id_store'];
+                            $coupon_new->id_store=$store['id'];
                             $coupon_new->logo=$coupon['logo'];
                             $coupon_new->save();
                             $coupons_id[]=$coupon_new->id;
@@ -248,14 +168,14 @@ class ParseController extends Controller
                     }
                     if (count($coupons_id)>0){
                         $coupon_del=Coupon::find()
-                            ->where(['id_store' => $store['id_store']])
+                            ->where(['id_store' => $store['id']])
                             ->andWhere(['not in', 'id', $coupons_id])
                             ->all();
                         foreach ($coupon_del as $del) {
                             $del->delete();
                         }
                     }
-                    $store_save= Store::findOne(['id' =>$store['id_store']]);
+                    $store_save= Store::findOne(['id' =>$store['id']]);
                     $store_save->id_process_coupon=$proc_option['id'];
                     $store_save->save();
                 }
@@ -263,4 +183,3 @@ class ParseController extends Controller
         }
     }
 }
-

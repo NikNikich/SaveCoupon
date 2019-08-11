@@ -9,6 +9,7 @@ use app\models\Search\StoreSearch;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
+use app\commands\ParseController;
 
 /**
  * StoreController implements the CRUD actions for Store model.
@@ -138,5 +139,14 @@ class StoreController extends Controller
         }
 
         throw new NotFoundHttpException('The requested page does not exist.');
+    }
+    /**
+     * Запуск процесса парсинга купонов и магазинов
+     */
+    public function actionProcess()
+    {
+        $controller = new ParseController(Yii::$app->controller->id, Yii::$app);
+        $controller->actionParseSite();
+        $this->redirect(['index']);
     }
 }

@@ -3,7 +3,12 @@
 use yii\db\Migration;
 
 /**
- * Handles the creation of table `{{%coupon}}`.
+ *Таблица хранения записей купонов магазина
+ * 'id_store' => айди магазина к которому относятся данныей купон
+ * 'title' => загаловок купона
+ * 'text' =>описание купона
+ * 'logo' => алрес ссылки на картинку логотипа
+ * 'period' =>период действия логотипа
  */
 class m190809_211128_create_coupon_table extends Migration
 {

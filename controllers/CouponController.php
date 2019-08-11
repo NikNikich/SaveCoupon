@@ -8,6 +8,7 @@ use app\models\Search\CouponSearch;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
+use app\commands\CouponsController;
 
 /**
  * CouponController implements the CRUD actions for Coupon model.
@@ -123,5 +124,14 @@ class CouponController extends Controller
         }
 
         throw new NotFoundHttpException('The requested page does not exist.');
+    }
+    /**
+     * Запуск процесса парсинга купонов
+     */
+    public function actionProcess()
+    {
+        $controller = new CouponsController(Yii::$app->controller->id, Yii::$app);
+        $controller->actionParseCoupon();
+        $this->redirect(['index']);
     }
 }
