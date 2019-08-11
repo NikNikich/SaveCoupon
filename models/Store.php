@@ -49,11 +49,11 @@ class Store extends \yii\db\ActiveRecord
     {
         return [
             'id' => 'ID',
-            'id_process_store' => 'Id Process Store',
-            'id_process_coupon' => 'Id Process Coupon',
-            'name' => 'Name',
-            'href' => 'Href',
-            'status' => 'Status',
+            'id_process_store' => 'Процесс при записи магазина',
+            'id_process_coupon' => 'Последний процесс поиска купонов',
+            'name' => 'Имя',
+            'href' => 'Ссылка',
+            'status' => 'Статус',
         ];
     }
 

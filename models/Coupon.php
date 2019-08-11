@@ -47,11 +47,11 @@ class Coupon extends \yii\db\ActiveRecord
     {
         return [
             'id' => 'ID',
-            'id_store' => 'Id Store',
-            'name' => 'Name',
-            'title' => 'Title',
-            'logo' => 'Logo',
-            'period' => 'Period',
+            'id_store' => 'Id Магазина',
+            'name' => 'Имя',
+            'title' => 'Титлы',
+            'logo' => 'Логотип',
+            'period' => 'Период',
         ];
     }
 
